@@ -1,0 +1,609 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>药品光敏反应查询系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #0078d7, #00a4ef, #28b4e5);
+        }
+        
+        h1 {
+            color: #005a9e;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            color: #4a6fa5;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+        
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 105, 148, 0.15);
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .search-container {
+            display: flex;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        #drug-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #28b4e5;
+            border-radius: 50px 0 0 50px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        #drug-input:focus {
+            border-color: #0078d7;
+            box-shadow: 0 0 0 3px rgba(40, 180, 229, 0.3);
+        }
+        
+        #search-btn {
+            background: linear-gradient(135deg, #0078d7, #00a4ef);
+            color: white;
+            border: none;
+            border-radius: 0 50px 50px 0;
+            padding: 0 35px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        #search-btn:hover {
+            background: linear-gradient(135deg, #0063b1, #0089d7);
+            transform: translateY(-2px);
+        }
+        
+        .ui-autocomplete {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .ui-menu-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .ui-menu-item:hover, .ui-state-focus {
+            background: #e6f7ff;
+            color: #0078d7;
+        }
+        
+        .result-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 105, 148, 0.15);
+            margin-bottom: 40px;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f9ff;
+        }
+        
+        .result-icon {
+            width: 80px;
+            height: 80px;
+            background: #e6f7ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 2.5rem;
+            color: #0078d7;
+        }
+        
+        .result-content {
+            flex: 1;
+        }
+        
+        .drug-name {
+            font-size: 1.8rem;
+            color: #005a9e;
+            margin-bottom: 5px;
+        }
+        
+        .drug-category {
+            font-size: 1.2rem;
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+        
+        .alert-box {
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .photosensitive {
+            background: #fff8e6;
+            border: 2px solid #ffd54f;
+            color: #e65100;
+        }
+        
+        .not-photosensitive {
+            background: #e8f5e9;
+            border: 2px solid #81c784;
+            color: #2e7d32;
+        }
+        
+        .alert-icon {
+            margin-right: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .visual-section {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .pharmacist {
+            width: 280px;
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+        }
+        
+        .pharmacist img {
+            width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .pharmacist h3 {
+            color: #005a9e;
+            margin-bottom: 10px;
+        }
+        
+        .drug-info {
+            flex: 1;
+            max-width: 600px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+        }
+        
+        .drug-info h3 {
+            color: #005a9e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background: #f0f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #28b4e5;
+        }
+        
+        .info-card h4 {
+            color: #0078d7;
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #4a6fa5;
+            font-size: 0.9rem;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            #drug-input {
+                border-radius: 50px;
+                margin-bottom: 15px;
+            }
+            
+            #search-btn {
+                border-radius: 50px;
+                padding: 15px;
+            }
+            
+            .visual-section {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-pills"></i> 药品光敏反应查询系统</h1>
+            <p class="subtitle">专业药品光敏性检测工具 - 快速查询药品是否会引起光敏反应，保障用药安全</p>
+        </header>
+        
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" id="drug-input" placeholder="请输入药品名称（支持模糊查询）">
+                <button id="search-btn">查询药品光敏性</button>
+            </div>
+        </section>
+        
+        <section class="result-section" id="result-section">
+            <div class="result-header">
+                <div class="result-icon">
+                    <i class="fas fa-capsules"></i>
+                </div>
+                <div class="result-content">
+                    <div class="drug-name" id="result-drug-name">药品名称</div>
+                    <div class="drug-category" id="result-drug-category">药品分类</div>
+                </div>
+            </div>
+            
+            <div class="alert-box" id="alert-box">
+                <div class="alert-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div id="alert-text">查询结果将显示在这里</div>
+            </div>
+        </section>
+        
+        <section class="visual-section">
+            <div class="pharmacist">
+                <svg width="150" height="150" viewBox="0 0 200 200">
+                    <circle cx="100" cy="80" r="40" fill="#e3f2fd"/>
+                    <circle cx="100" cy="75" r="25" fill="#ffccbc"/>
+                    <ellipse cx="90" cy="70" rx="3" ry="5" fill="#5d4037"/>
+                    <ellipse cx="110" cy="70" rx="3" ry="5" fill="#5d4037"/>
+                    <path d="M85,85 Q100,95 115,85" stroke="#5d4037" stroke-width="2" fill="none"/>
+                    <rect x="60" y="120" width="80" height="70" rx="10" fill="#42a5f5"/>
+                    <rect x="85" y="140" width="30" height="40" fill="#bbdefb"/>
+                    <path d="M60,120 Q100,100 140,120" fill="#1e88e5"/>
+                    <circle cx="75" cy="100" r="8" fill="#e3f2fd"/>
+                    <circle cx="125" cy="100" r="8" fill="#e3f2fd"/>
+                </svg>
+                <h3>药剂师提示</h3>
+                <p>光敏性药物在阳光下可能引起皮肤过敏反应，用药期间请注意防晒</p>
+            </div>
+            
+            <div class="drug-info">
+                <h3><i class="fas fa-lightbulb"></i> 光敏反应小知识</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>什么是光敏反应？</h4>
+                        <p>某些药物在日光照射下可能引发皮肤过敏反应，表现为红肿、瘙痒、水疱等症状。</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>常见光敏药物</h4>
+                        <p>抗生素、利尿剂、NSAIDs、抗肿瘤药等类别药物较易引起光敏反应。</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>预防措施</h4>
+                        <p>使用光敏药物期间应避免阳光直射，使用高倍数防晒霜，穿着防晒衣物。</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>处理方式</h4>
+                        <p>如出现光敏反应，立即避光并冷敷，严重时应及时就医并考虑更换药物。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 药品安全信息中心 | 数据仅供参考，具体用药请遵医嘱</p>
+            <p>温馨提示：本系统包含常见光敏药物信息，但可能存在未收录药品，用药前请咨询专业医师</p>
+        </footer>
+    </div>
+
+    <script>
+        // 药品数据
+        const drugData = [
+            // 抗微生物药
+            { name: "司帕沙星", category: "抗微生物药" },
+            { name: "氟罗沙星", category: "抗微生物药" },
+            { name: "诺氟沙星", category: "抗微生物药" },
+            { name: "氧氟沙星", category: "抗微生物药" },
+            { name: "左氧氟沙星", category: "抗微生物药" },
+            { name: "环丙沙星", category: "抗微生物药" },
+            { name: "克林沙星", category: "抗微生物药" },
+            { name: "洛美沙星", category: "抗微生物药" },
+            { name: "西他沙星", category: "抗微生物药" },
+            { name: "复方新诺明", category: "抗微生物药" },
+            { name: "甲氧苄啶", category: "抗微生物药" },
+            { name: "米诺环素", category: "抗微生物药" },
+            { name: "多西环素", category: "抗微生物药" },
+            { name: "地美环素", category: "抗微生物药" },
+            { name: "庆大霉素", category: "抗微生物药" },
+            { name: "吡嗪酰胺", category: "抗微生物药" },
+            { name: "灰黄霉素", category: "抗微生物药" },
+            { name: "酮康唑", category: "抗微生物药" },
+            { name: "氟胞嘧啶", category: "抗微生物药" },
+            { name: "伊曲康唑", category: "抗微生物药" },
+            { name: "伏立康唑", category: "抗微生物药" },
+            { name: "特比萘芬", category: "抗微生物药" },
+            { name: "莫西沙星", category: "抗微生物药" },
+
+            
+            // 抗肿瘤药
+            { name: "甲氨蝶呤", category: "抗肿瘤药" },
+            { name: "长春新碱", category: "抗肿瘤药" },
+            { name: "羟基脲", category: "抗肿瘤药" },
+            { name: "氟尿嘧啶", category: "抗肿瘤药" },
+            { name: "索拉非尼", category: "抗肿瘤药" },
+            { name: "威罗菲尼", category: "抗肿瘤药" },
+            { name: "氟他米特", category: "抗肿瘤药" },
+            { name: "多西他赛", category: "抗肿瘤药" },
+            { name: "卡培他滨", category: "抗肿瘤药" },
+            { name: "多柔比星", category: "抗肿瘤药" },
+            { name: "替加氟", category: "抗肿瘤药" },
+            { name: "紫杉醇", category: "抗肿瘤药" },
+            { name: "达卡巴嗪", category: "抗肿瘤药" },
+            { name: "表柔比星", category: "抗肿瘤药" },
+            
+            // 非甾体类抗炎药
+            { name: "阿司匹林", category: "非甾体类抗炎药" },
+            { name: "双氯芬酸", category: "非甾体类抗炎药" },
+            { name: "布洛芬", category: "非甾体类抗炎药" },
+            { name: "酮洛芬", category: "非甾体类抗炎药" },
+            { name: "罗非昔布", category: "非甾体类抗炎药" },
+            { name: "美洛昔康", category: "非甾体类抗炎药" },
+            { name: "保泰松", category: "非甾体类抗炎药" },
+            { name: "萘普生", category: "非甾体类抗炎药" },
+            { name: "吡罗昔康", category: "非甾体类抗炎药" },
+            { name: "萘丁美酮", category: "非甾体类抗炎药" },
+            { name: "吲哚美辛", category: "非甾体类抗炎药" },
+            
+            // 利尿药
+            { name: "氢氯噻嗪", category: "利尿药" },
+            { name: "呋塞米", category: "利尿药" },
+            { name: "吲达帕胺", category: "利尿药" },
+            { name: "氨苯喋啶", category: "利尿药" },
+            
+            // 抗过敏药
+            { name: "马来酸氯苯那敏", category: "抗过敏药" },
+            { name: "苯海拉明", category: "抗过敏药" },
+            { name: "赛庚啶", category: "抗过敏药" },
+            { name: "色甘酸钠", category: "抗过敏药" },
+            { name: "西替利嗪", category: "抗过敏药" },
+            { name: "氯雷他定", category: "抗过敏药" },
+            { name: "异丙嗪", category: "抗过敏药" },
+            { name: "扑尔敏", category: "抗过敏药" },
+            
+            // 降糖药
+            { name: "格列美脲", category: "降糖药" },
+            { name: "格列吡嗪", category: "降糖药" },
+            { name: "格列本脲", category: "降糖药" },
+            { name: "二甲双胍", category: "降糖药" },
+            { name: "氯磺丙脲", category: "降糖药" },
+            { name: "甲苯磺丁脲", category: "降糖药" },
+            { name: "西他列汀", category: "降糖药" },
+            
+            // 降脂药
+            { name: "吉非罗齐", category: "降脂药" },
+            { name: "苯扎贝特", category: "降脂药" },
+            { name: "非诺贝特", category: "降脂药" },
+            { name: "辛伐他汀", category: "降脂药" },
+            { name: "普伐他汀", category: "降脂药" },
+            { name: "氟伐他汀", category: "降脂药" },
+            { name: "阿托伐他汀", category: "降脂药" },
+            
+            // 降压药
+            { name: "硝苯地平", category: "降压药" },
+            { name: "尼莫地平", category: "降压药" },
+            { name: "尼群地平", category: "降压药" },
+            { name: "非洛地平", category: "降压药" },
+            { name: "氨氯地平", category: "降压药" },
+            { name: "地尔硫䓬", category: "降压药" },
+            { name: "贝那普利", category: "降压药" },
+            { name: "卡托普利", category: "降压药" },
+            { name: "依那普利", category: "降压药" },
+            { name: "赖诺普利", category: "降压药" },
+            { name: "雷米普利", category: "降压药" },
+            { name: "喹那普利", category: "降压药" },
+            { name: "氯沙坦", category: "降压药" },
+            { name: "缬沙坦", category: "降压药" },
+            { name: "替利洛尔", category: "降压药" },
+            
+            // 抑酸药
+            { name: "雷尼替丁", category: "抑酸药" },
+            { name: "奥美拉唑", category: "抑酸药" },
+            { name: "泮托拉唑", category: "抑酸药" },
+            { name: "雷贝拉唑", category: "抑酸药" },
+            
+            // 抗心律失常药
+            { name: "胺碘酮", category: "抗心律失常药" },
+            { name: "奎尼丁", category: "抗心律失常药" },
+            { name: "普萘洛尔", category: "抗心律失常药" },
+            { name: "心得安", category: "抗心律失常药" },
+            
+            // 抗疟疾药
+            { name: "奎宁", category: "抗疟疾药" },
+            { name: "氯喹", category: "抗疟疾药" },
+            { name: "羟氯喹", category: "抗疟疾药" },
+            { name: "乙胺嘧啶", category: "抗疟疾药" },
+            
+            // 神经系统药
+            { name: "阿普唑仑", category: "神经系统药" },
+            { name: "拉莫三嗪", category: "神经系统药" },
+            { name: "硫利达嗪", category: "神经系统药" },
+            { name: "氟哌噻吨", category: "神经系统药" },
+            { name: "奥氮平", category: "神经系统药" },
+            { name: "氯氮平", category: "神经系统药" },
+            { name: "氯丙嗪", category: "神经系统药" },
+            { name: "奋乃静", category: "神经系统药" },
+            { name: "氟奋乃静", category: "神经系统药" },
+            { name: "三氟拉嗪", category: "神经系统药" },
+            { name: "丙咪嗪", category: "神经系统药" },
+            { name: "地昔帕明", category: "神经系统药" },
+            { name: "多虑平", category: "神经系统药" },
+            { name: "阿米替林", category: "神经系统药" },
+            { name: "舒乐安定", category: "神经系统药" },
+            { name: "氟西汀", category: "神经系统药" },
+            { name: "百忧解", category: "神经系统药" },
+            { name: "帕罗西汀", category: "神经系统药" },
+            { name: "氟伏沙明", category: "神经系统药" },
+            { name: "舍曲林", category: "神经系统药" },
+            { name: "文拉法辛", category: "神经系统药" },
+            
+            // 外用药
+            { name: "复方氢醌霜", category: "外用药" },
+            { name: "异维A酸膏", category: "外用药" }
+        ];
+
+        $(document).ready(function() {
+            // 设置自动补全
+            $("#drug-input").autocomplete({
+                source: drugData.map(drug => drug.name),
+                minLength: 1,
+                delay: 100
+            });
+            
+            // 查询按钮点击事件
+            $("#search-btn").click(function() {
+                performSearch();
+            });
+            
+            // 回车键触发查询
+            $("#drug-input").keypress(function(e) {
+                if (e.which === 13) {
+                    performSearch();
+                }
+            });
+            
+            function performSearch() {
+                const input = $("#drug-input").val().trim();
+                if (!input) {
+                    alert("请输入药品名称");
+                    return;
+                }
+                
+                // 查找匹配的药品（不区分大小写，支持模糊匹配）
+                const foundDrug = drugData.find(drug => 
+                    drug.name.toLowerCase().includes(input.toLowerCase())
+                );
+                
+                // 显示结果区域
+                $("#result-section").show();
+                
+                if (foundDrug) {
+                    // 显示药品信息
+                    $("#result-drug-name").text(foundDrug.name);
+                    $("#result-drug-category").text(foundDrug.category);
+                    
+                    // 设置光敏反应提示
+                    $("#alert-box").removeClass("not-photosensitive").addClass("photosensitive");
+                    $("#alert-text").html(`<strong>该药品属于光敏反应药物！</strong><br>注意防晒，避开阳光，情况严重请立即就医！`);
+                    $("#alert-box .alert-icon").html('<i class="fas fa-exclamation-triangle"></i>');
+                } else {
+                    // 显示药品信息（使用用户输入的名称）
+                    $("#result-drug-name").text(input);
+                    $("#result-drug-category").text("未知分类");
+                    
+                    // 设置非光敏反应提示
+                    $("#alert-box").removeClass("photosensitive").addClass("not-photosensitive");
+                    $("#alert-text").html(`<strong>该药物不属于光敏反应的药品！</strong><br>常规使用情况下无需特殊防晒，但个体差异可能存在不同反应。`);
+                    $("#alert-box .alert-icon").html('<i class="fas fa-check-circle"></i>');
+                }
+                
+                // 滚动到结果区域
+                $('html, body').animate({
+                    scrollTop: $("#result-section").offset().top - 100
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
