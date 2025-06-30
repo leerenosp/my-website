@@ -1,1 +1,602 @@
-hello
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光敏/光毒反应药品查询系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f2f1 0%, #f5f5f5 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            border-left: 8px solid #00796b;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #00796b, #009688, #4db6ac);
+        }
+        
+        h1 {
+            color: #00796b;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            color: #4a6fa5;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+        
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 105, 148, 0.15);
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .search-container {
+            display: flex;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        #drug-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #4db6ac;
+            border-radius: 50px 0 0 50px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        #drug-input:focus {
+            border-color: #00796b;
+            box-shadow: 0 0 0 3px rgba(77, 182, 172, 0.3);
+        }
+        
+        #search-btn {
+            background: linear-gradient(135deg, #00796b, #009688);
+            color: white;
+            border: none;
+            border-radius: 0 50px 50px 0;
+            padding: 0 35px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        #search-btn:hover {
+            background: linear-gradient(135deg, #00695c, #00897b);
+            transform: translateY(-2px);
+        }
+        
+        .ui-autocomplete {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .ui-menu-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .ui-menu-item:hover, .ui-state-focus {
+            background: #e0f2f1;
+            color: #00796b;
+        }
+        
+        .result-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 105, 148, 0.15);
+            margin-bottom: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0f2f1;
+        }
+        
+        .result-icon {
+            width: 80px;
+            height: 80px;
+            background: #e0f2f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 2.5rem;
+            color: #00796b;
+        }
+        
+        .result-content {
+            flex: 1;
+        }
+        
+        .drug-name {
+            font-size: 1.8rem;
+            color: #00796b;
+            margin-bottom: 5px;
+        }
+        
+        .drug-category {
+            font-size: 1.2rem;
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+        
+        .reaction-box {
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-start;
+            border-left: 5px solid #4db6ac;
+            background: #f5fbfa;
+        }
+        
+        .reaction-icon {
+            margin-right: 15px;
+            font-size: 1.8rem;
+            color: #00796b;
+        }
+        
+        .not-photosensitive {
+            background: #e8f5e9;
+            border-left: 5px solid #81c784;
+        }
+        
+        .visual-section {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .pharmacist {
+            width: 280px;
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+        }
+        
+        .pharmacist h3 {
+            color: #00796b;
+            margin-bottom: 10px;
+        }
+        
+        .knowledge {
+            flex: 1;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 105, 148, 0.1);
+        }
+        
+        .knowledge h3 {
+            color: #00796b;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background: #e0f2f1;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        
+        .info-card h4 {
+            color: #00796b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-card p {
+            margin-bottom: 10px;
+            line-height: 1.7;
+        }
+        
+        .info-card ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .info-card li {
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .info-card li:before {
+            content: "•";
+            color: #009688;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #4a6fa5;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            #drug-input {
+                border-radius: 50px;
+                margin-bottom: 15px;
+            }
+            
+            #search-btn {
+                border-radius: 50px;
+                padding: 15px;
+            }
+            
+            .visual-section {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        .sun-icon {
+            color: #ff9800;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pharmacist-img {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #e0f2f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: #00796b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-pills"></i> 光敏/光毒反应药品查询系统</h1>
+            <p class="subtitle">专业药品光敏性检测工具 - 快速查询药品是否会引起光敏或光毒反应，保障用药安全</p>
+        </header>
+        
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" id="drug-input" placeholder="请输入药品名称（支持模糊查询）">
+                <button id="search-btn">查询药品光敏性</button>
+            </div>
+        </section>
+        
+        <section class="result-section" id="result-section">
+            <div class="result-header">
+                <div class="result-icon">
+                    <i class="fas fa-capsules"></i>
+                </div>
+                <div class="result-content">
+                    <div class="drug-name" id="result-drug-name">药品名称</div>
+                    <div class="drug-category" id="result-drug-category">药品分类</div>
+                </div>
+            </div>
+            
+            <div class="reaction-box" id="reaction-box">
+                <div class="reaction-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div id="reaction-text">查询结果将显示在这里</div>
+            </div>
+        </section>
+        
+        <section class="visual-section">
+            <div class="pharmacist">
+                <div class="pharmacist-img">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h3>药剂师提示</h3>
+                <p>光敏性药物在阳光下可能引起皮肤过敏反应，用药期间请注意防晒</p>
+                <p style="margin-top: 15px; color: #e65100;">
+                    <i class="fas fa-exclamation-triangle"></i> 用药期间及停药后5天内避免曝晒
+                </p>
+            </div>
+            
+            <div class="knowledge">
+                <h3><i class="fas fa-lightbulb sun-icon"></i> 光敏/光毒反应小知识</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4><i class="fas fa-info-circle"></i> 什么是光敏/光毒反应？</h4>
+                        <p>药物光敏反应是指口服或局部外用某些药物后暴露于日光下（主要为紫外线）所产生的不良反应。</p>
+                        <p>引起光敏反应的光线最常见的是长波紫外线（UVA）、中波紫外线（UVB）和可见光。</p>
+                        <p>主要临床表现为：</p>
+                        <ul>
+                            <li>光敏性皮炎</li>
+                            <li>日光性荨麻疹</li>
+                            <li>光敏性痘疮样水疱病等</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4><i class="fas fa-shield-alt"></i> 如何预防光敏反应</h4>
+                        <ul>
+                            <li>每日一次用药可选择夜间服药</li>
+                            <li>在医生指导下减少给药剂量或服药频次</li>
+                            <li>用药期间及停药后5天内避免曝晒</li>
+                            <li>尽量减少在11：00~15：00日晒强度高的时段外出</li>
+                            <li>出行注意防晒：撑太阳伞、戴遮阳帽或太阳镜</li>
+                            <li>皮肤裸露部位涂防晒品</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4><i class="fas fa-first-aid"></i> 出现反应如何处理</h4>
+                        <ul>
+                            <li>最初出现刺痒或红斑应及时躲避光晒</li>
+                            <li>对受影响区域进行冷敷</li>
+                            <li>避免抓挠或刺激皮肤</li>
+                            <li>停用可疑药物</li>
+                            <li>出现明显皮疹应及时就诊</li>
+                            <li>在医生指导下使用抗过敏药物</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4><i class="fas fa-exclamation-triangle"></i> 特殊药物警示</h4>
+                        <ul>
+                            <li>胺碘酮：可能导致暴晒皮肤出现蓝灰色色素沉着</li>
+                            <li>灰黄霉素：可能诱发亚急性皮肤性红斑狼疮</li>
+                            <li>氢氯噻嗪：随着累积剂量增加，发生非黑素瘤皮肤癌风险增加</li>
+                            <li>呋塞米：皮肤可能对光照更敏感</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 药品安全信息中心 | 数据仅供参考，具体用药请遵医嘱</p>
+            <p>温馨提示：本系统包含常见光敏药物信息，但可能存在未收录药品，用药前请咨询专业医师</p>
+        </footer>
+    </div>
+
+    <script>
+        // 药品数据（根据附件整理）
+        const drugData = [
+            // 抗微生物药
+            { name: "司帕沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "氟罗沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "诺氟沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "氧氟沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "左氧氟沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "环丙沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "洛美沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "西他沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "米诺环素", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "多西环素", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "地美环素", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "伏立康唑", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "莫西沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "依诺沙星", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "灰黄霉素", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "磺胺多辛", category: "抗微生物药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 抗肿瘤药
+            { name: "甲氨蝶呤", category: "抗肿瘤药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "维莫非尼", category: "抗肿瘤药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "伊马替尼", category: "抗肿瘤药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "卡培他滨", category: "抗肿瘤药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 抗疟疾药
+            { name: "氯喹", category: "抗疟疾药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "羟氯喹", category: "抗疟疾药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 神经系统药
+            { name: "硫利达嗪", category: "神经系统药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 外用药
+            { name: "异维A酸凝胶", category: "外用药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "维甲酸", category: "外用药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 利尿药
+            { name: "氢氯噻嗪", category: "利尿药", reaction: "随着累积剂量的增加，发生非黑素瘤皮肤癌的风险增加。与暴露在阳光和紫外线辐射下有关。" },
+            { name: "呋塞米", category: "利尿药", reaction: "皮肤可能对光照更敏感。" },
+            
+            // 非甾体类抗炎药
+            { name: "罗非昔布", category: "非甾体类抗炎药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "吡罗昔康", category: "非甾体类抗炎药", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 心血管类药物
+            { name: "贝那普利", category: "心血管类药物", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "依那普利", category: "心血管类药物", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            { name: "氯沙坦", category: "心血管类药物", reaction: "该药品属于光敏/光毒反应药物！<br>注意防晒，避开阳光，情况严重请立即就医！" },
+            
+            // 抗心律失常药
+            { name: "胺碘酮", category: "抗心律失常药", reaction: "该药品属于光敏/光毒反应药物！可能导致暴晒的皮肤出现蓝灰色色素沉着。" },
+            
+            // 中药
+            { name: "补骨脂", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "连翘", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "竹黄", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "独活", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "沙参", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "白芷", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "白鲜皮", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "仙鹤草", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "前胡", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "防风", category: "中药", reaction: "皮肤可能对光照更敏感。" },
+            { name: "荆芥", category: "中药", reaction: "皮肤可能对光照更敏感。" }
+        ];
+
+        $(document).ready(function() {
+            // 设置自动补全
+            $("#drug-input").autocomplete({
+                source: drugData.map(drug => drug.name),
+                minLength: 1,
+                delay: 100
+            });
+            
+            // 查询按钮点击事件
+            $("#search-btn").click(function() {
+                performSearch();
+            });
+            
+            // 回车键触发查询
+            $("#drug-input").keypress(function(e) {
+                if (e.which === 13) {
+                    performSearch();
+                }
+            });
+            
+            function performSearch() {
+                const input = $("#drug-input").val().trim();
+                if (!input) {
+                    alert("请输入药品名称");
+                    return;
+                }
+                
+                // 查找匹配的药品（不区分大小写，支持模糊匹配）
+                const foundDrug = drugData.find(drug => 
+                    drug.name.toLowerCase().includes(input.toLowerCase())
+                );
+                
+                // 显示结果区域
+                $("#result-section").show();
+                
+                if (foundDrug) {
+                    // 显示药品信息
+                    $("#result-drug-name").text(foundDrug.name);
+                    $("#result-drug-category").text(foundDrug.category);
+                    
+                    // 设置光敏反应提示
+                    $("#reaction-box").removeClass("not-photosensitive");
+                    $("#reaction-text").html(`<strong>光敏/光毒反应提示：</strong><br>${foundDrug.reaction}`);
+                    $("#reaction-box .reaction-icon").html('<i class="fas fa-exclamation-triangle"></i>');
+                } else {
+                    // 显示药品信息（使用用户输入的名称）
+                    $("#result-drug-name").text(input);
+                    $("#result-drug-category").text("未知分类");
+                    
+                    // 设置非光敏反应提示
+                    $("#reaction-box").addClass("not-photosensitive");
+                    $("#reaction-text").html(`<strong>该药物不属于光敏/光毒反应的药品！</strong><br>具体用药，请查看药品说明书！`);
+                    $("#reaction-box .reaction-icon").html('<i class="fas fa-check-circle"></i>');
+                }
+                
+                // 滚动到结果区域
+                $('html, body').animate({
+                    scrollTop: $("#result-section").offset().top - 100
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
